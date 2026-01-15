@@ -1,21 +1,33 @@
 const socket = io();
 let localStream;
 
-async function start(){
-  document.getElementById("overlay").style.display="block";
-  localStream = await navigator.mediaDevices.getUserMedia({video:true,audio:true});
-  document.getElementById("local").srcObject = localStream;
+const overlay = document.getElementById("overlay");
+const localVideo = document.getElementById("localVideo");
+
+document.getElementById("startBtn").onclick = async () => {
+  overlay.style.display = "flex";
+
+  localStream = await navigator.mediaDevices.getUserMedia({
+    video: true,
+    audio: true
+  });
+
+  localVideo.srcObject = localStream;
   socket.emit("start");
-}
+};
 
-function stop(){
+document.getElementById("stopBtn").onclick = () => {
   socket.emit("skip");
-}
+};
 
-socket.on("match",()=>{
-  document.getElementById("overlay").style.display="none";
+socket.on("waiting", () => {
+  overlay.style.display = "flex";
 });
 
-socket.on("waiting",()=>{
-  document.getElementById("overlay").style.display="block";
+socket.on("match", () => {
+  overlay.style.display = "none";
+});
+
+socket.on("solo", () => {
+  overlay.style.display = "none";
 });
