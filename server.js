@@ -12,14 +12,14 @@ let waitingUsers = [];
 let blockedUsers = {};
 
 io.on('connection', (socket) => {
-  console.log('Benutzer verbunden:', socket.id);
+  console.log('User connected', socket.id);
 
   socket.on('join', (data) => {
     socket.language = data.language || '';
     matchUser(socket);
   });
 
-  function matchUser(user) {
+  function matchUser(user){
     const partner = waitingUsers.find(u =>
       u.socket.id !== user.id &&
       (user.language === '' || u.language === user.language) &&
@@ -27,26 +27,26 @@ io.on('connection', (socket) => {
       (!blockedUsers[u.socket.id] || !blockedUsers[u.socket.id].includes(user.id))
     );
 
-    if (partner) {
+    if(partner){
       user.partnerId = partner.socket.id;
       partner.socket.partnerId = user.id;
       user.emit('match', partner.socket.id);
       partner.socket.emit('match', user.id);
       waitingUsers = waitingUsers.filter(u => u.socket.id !== user.id && u.socket.id !== partner.socket.id);
-    } else {
+    }else{
       waitingUsers.push({ socket: user, language: user.language });
     }
   }
 
-  socket.on('offer', (data) => io.to(data.target).emit('offer', { sdp: data.sdp, from: socket.id }));
-  socket.on('answer', (data) => io.to(data.target).emit('answer', { sdp: data.sdp, from: socket.id }));
-  socket.on('ice-candidate', (data) => io.to(data.target).emit('ice-candidate', { candidate: data.candidate, from: socket.id }));
-  socket.on('message', (msg) => { if(socket.partnerId) io.to(socket.partnerId).emit('message', { message: msg.message }); });
-  socket.on('skip', () => { if(socket.partnerId){ io.to(socket.partnerId).emit('partner-left'); socket.partnerId=null;} matchUser(socket); });
-  socket.on('block', () => { if(socket.partnerId){ blockedUsers[socket.id] = blockedUsers[socket.id] || []; blockedUsers[socket.id].push(socket.partnerId); io.to(socket.partnerId).emit('partner-left'); socket.partnerId=null;} matchUser(socket); });
+  socket.on('offer', (data)=> io.to(data.target).emit('offer',{ sdp:data.sdp, from:socket.id }));
+  socket.on('answer', (data)=> io.to(data.target).emit('answer',{ sdp:data.sdp, from:socket.id }));
+  socket.on('ice-candidate', (data)=> io.to(data.target).emit('ice-candidate',{ candidate:data.candidate, from:socket.id }));
+  socket.on('message', (msg)=> { if(socket.partnerId) io.to(socket.partnerId).emit('message',{ message: msg.message }); });
+  socket.on('skip', ()=> { if(socket.partnerId){ io.to(socket.partnerId).emit('partner-left'); socket.partnerId=null;} matchUser(socket); });
+  socket.on('block', ()=> { if(socket.partnerId){ blockedUsers[socket.id]=blockedUsers[socket.id]||[]; blockedUsers[socket.id].push(socket.partnerId); io.to(socket.partnerId).emit('partner-left'); socket.partnerId=null;} matchUser(socket); });
 
-  socket.on('disconnect', () => { waitingUsers = waitingUsers.filter(u => u.socket.id !== socket.id); if(socket.partnerId) io.to(socket.partnerId).emit('partner-left'); });
+  socket.on('disconnect', ()=> { waitingUsers = waitingUsers.filter(u=>u.socket.id!==socket.id); if(socket.partnerId) io.to(socket.partnerId).emit('partner-left'); });
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`ZapMeet läuft auf Port ${PORT}`));
+server.listen(PORT, ()=>console.log(`ZapMeet läuft auf Port ${PORT}`));
