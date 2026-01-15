@@ -33,7 +33,9 @@ io.on('connection', (socket) => {
       user.emit('match', partner.socket.id);
       partner.socket.emit('match', user.id);
       waitingUsers = waitingUsers.filter(u => u.socket.id !== user.id && u.socket.id !== partner.socket.id);
-    }else{
+    } else {
+      // Solo-Modus
+      user.emit('solo');
       waitingUsers.push({ socket: user, language: user.language });
     }
   }
