@@ -7,30 +7,16 @@
 </head>
 <body>
 
-<!-- Overlay -->
 <div id="overlay">
   <h1>ZapMeet</h1>
   <p>Du wirst so schnell wie möglich verbunden</p>
-  <div class="spinner"></div>
 </div>
 
-<div id="app">
+<button onclick="start()">Start</button>
+<button onclick="stop()">Stopp</button>
 
-  <div id="videos">
-    <video id="remoteVideo" autoplay></video>
-    <video id="localVideo" autoplay muted></video>
-  </div>
-
-  <div id="bottom">
-    <button id="startBtn">Start</button>
-    <button id="stopBtn">Stopp</button>
-    <div id="chat">
-      <div id="messages"></div>
-      <input id="msg" placeholder="Nachricht schreiben">
-    </div>
-  </div>
-
-</div>
+<video id="remote" autoplay></video>
+<video id="local" autoplay muted></video>
 
 <script src="/socket.io/socket.io.js"></script>
 <script src="app.js"></script>
