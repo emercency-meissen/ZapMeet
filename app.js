@@ -37,18 +37,27 @@ async function startConnection(){
   socket.emit('join',{ language: languageSelect.value });
 }
 
-// === Matching / Overlay ===
+// === Matching / Overlay / Solo-Modus ===
 socket.on('match', partnerId=>{
   currentPartnerId = partnerId;
+  // Stop Solo Musik falls läuft
+  document.querySelectorAll('audio').forEach(m=>m.pause());
   connectOverlay.style.display='none';
   createPeerConnection(partnerId);
 });
 
-socket.on('partner-left', ()=>{
-  endConnection();
-  currentPartnerId=null;
-  connectOverlay.style.display='flex';
-  socket.emit('join',{ language: languageSelect.value });
+socket.on('solo', ()=>{
+  connectOverlay.style.display='none';
+  mainUI.style.display='flex';
+  const audio = new Audio('https://www.bensound.com/bensound-music/bensound-sunny.mp3');
+  audio.loop = true;
+  audio.play();
+  const soloNote = document.createElement('div');
+  soloNote.textContent = "Du bist momentan alleine. Genieße die Musik!";
+  soloNote.style.color="#555";
+  soloNote.style.marginTop="10px";
+  soloNote.style.fontSize="1.2rem";
+  mainUI.appendChild(soloNote);
 });
 
 // === WebRTC ===
