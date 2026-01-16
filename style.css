@@ -34,8 +34,8 @@ body {
   to { transform: rotate(360deg); }
 }
 
-/* Layout */
-#container {
+/* App */
+#app {
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -50,19 +50,20 @@ body {
 
 #remoteVideo {
   flex: 2;
+  background: #111;
   object-fit: cover;
 }
 
 #localVideo {
   flex: 1;
   object-fit: cover;
-  border-left: 2px solid #000;
+  border-left: 2px solid black;
 }
 
 /* Bottom */
 #bottom {
   height: 160px;
-  background: #fff;
+  background: white;
   display: flex;
   padding: 10px;
 }
