@@ -7,29 +7,27 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// ALLES aus Root laden
 app.use(express.static(__dirname));
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-let waiting = null;
+let waitingUser = null;
 
 io.on("connection", socket => {
 
   socket.on("start", () => {
-    if (waiting) {
-      socket.partner = waiting.id;
-      waiting.partner = socket.id;
+    if (waitingUser && waitingUser.id !== socket.id) {
+      socket.partner = waitingUser.id;
+      waitingUser.partner = socket.id;
 
-      socket.emit("match", waiting.id);
-      waiting.emit("match", socket.id);
+      socket.emit("match", waitingUser.id);
+      waitingUser.emit("match", socket.id);
 
-      waiting = null;
+      waitingUser = null;
     } else {
-      waiting = socket;
-      socket.emit("waiting");
+      waitingUser = socket;
     }
   });
 
@@ -45,11 +43,10 @@ io.on("connection", socket => {
       io.to(socket.partner).emit("end");
     }
     socket.partner = null;
-    socket.emit("waiting");
   });
 
   socket.on("disconnect", () => {
-    if (waiting === socket) waiting = null;
+    if (waitingUser === socket) waitingUser = null;
     if (socket.partner) {
       io.to(socket.partner).emit("end");
     }
