@@ -1,112 +1,26 @@
-* {
-  box-sizing: border-box;
-  font-family: Arial, sans-serif;
-}
-
 body {
   margin: 0;
-  background: #eee;
+  background: #000;
   height: 100vh;
-}
-
-/* Overlay */
-#overlay {
-  position: fixed;
-  inset: 0;
-  background: white;
-  z-index: 10;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
 }
 
-.loader {
-  width: 40px;
-  height: 40px;
-  border: 5px solid #ddd;
-  border-top: 5px solid #ff5722;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-/* App */
-#app {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-/* Videos */
 #videos {
   flex: 1;
   display: flex;
-  background: black;
 }
 
-#remoteVideo {
-  flex: 2;
+video {
+  width: 50%;
+  object-fit: cover;
   background: #111;
-  object-fit: cover;
 }
 
-#localVideo {
-  flex: 1;
-  object-fit: cover;
-  border-left: 2px solid black;
-}
-
-/* Bottom */
 #bottom {
-  height: 160px;
-  background: white;
+  height: 80px;
+  background: #fff;
   display: flex;
-  padding: 10px;
-}
-
-#controls {
-  width: 260px;
-  display: flex;
-  gap: 10px;
-}
-
-#startBtn {
-  flex: 1;
-  background: #4caf50;
-  color: white;
-  font-size: 18px;
-  border: none;
-}
-
-#stopBtn {
-  flex: 1;
-  background: #f44336;
-  color: white;
-  font-size: 18px;
-  border: none;
-}
-
-/* Chat */
-#chat {
-  flex: 1;
-  margin-left: 10px;
-  display: flex;
-  flex-direction: column;
-}
-
-#messages {
-  flex: 1;
-  border: 1px solid #ccc;
-  margin-bottom: 5px;
-  padding: 5px;
-  overflow-y: auto;
-}
-
-#msg {
-  padding: 10px;
-  font-size: 14px;
+  align-items: center;
+  justify-content: center;
 }
