@@ -7,14 +7,22 @@
 </head>
 <body>
 
-<div id="videos">
-  <video id="remote" autoplay playsinline></video>
-  <video id="local" autoplay muted playsinline></video>
+<div id="overlay">
+  <h1>ZapMeet</h1>
+  <p>Du wirst so schnell wie möglich verbunden</p>
+  <div class="loader"></div>
 </div>
 
-<div id="bottom">
+<header>ZapMeet</header>
+
+<main>
+  <video id="remote" autoplay playsinline></video>
+  <video id="local" autoplay muted playsinline></video>
+</main>
+
+<footer>
   <button id="start">Start</button>
-</div>
+</footer>
 
 <script src="/socket.io/socket.io.js"></script>
 <script src="app.js"></script>
