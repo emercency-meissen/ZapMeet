@@ -1,71 +1,54 @@
 const socket = io();
+const overlay = document.getElementById("overlay");
 
-let pc;
-let partnerId;
-let stream;
+let pc, stream, partner;
 
-const local = document.getElementById("local");
-const remote = document.getElementById("remote");
-
-navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-  .then(s => {
-    stream = s;
-    local.srcObject = stream;
-  });
+navigator.mediaDevices.getUserMedia({ video:true, audio:true })
+.then(s => {
+  stream = s;
+  document.getElementById("local").srcObject = s;
+});
 
 document.getElementById("start").onclick = () => {
+  overlay.style.display = "flex";
   socket.emit("start");
 };
 
 socket.on("waiting", () => {
-  console.log("Warten auf Partner");
+  // bleibt im Overlay
 });
 
-socket.on("match", async ({ partnerId: pid, initiator }) => {
-  partnerId = pid;
+socket.on("matched", async d => {
+  overlay.style.display = "none";
+  partner = d.id;
 
   pc = new RTCPeerConnection({
-    iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+    iceServers: [{ urls:"stun:stun.l.google.com:19302" }]
   });
 
   stream.getTracks().forEach(t => pc.addTrack(t, stream));
+  pc.ontrack = e =>
+    document.getElementById("remote").srcObject = e.streams[0];
 
-  pc.ontrack = e => {
-    remote.srcObject = e.streams[0];
-  };
+  pc.onicecandidate = e =>
+    e.candidate && socket.emit("signal", { to: partner, data: e.candidate });
 
-  pc.onicecandidate = e => {
-    if (e.candidate) {
-      socket.emit("signal", { to: partnerId, data: e.candidate });
-    }
-  };
-
-  if (initiator) {
+  if (d.init) {
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
-    socket.emit("signal", { to: partnerId, data: offer });
+    socket.emit("signal", { to: partner, data: offer });
   }
 });
 
-socket.on("signal", async ({ from, data }) => {
-  if (!pc) return;
-
-  if (data.type === "offer") {
-    await pc.setRemoteDescription(data);
-    const answer = await pc.createAnswer();
-    await pc.setLocalDescription(answer);
-    socket.emit("signal", { to: from, data: answer });
-  } 
-  else if (data.type === "answer") {
-    await pc.setRemoteDescription(data);
-  } 
-  else {
-    await pc.addIceCandidate(data);
+socket.on("signal", async d => {
+  if (d.data.type === "offer") {
+    await pc.setRemoteDescription(d.data);
+    const ans = await pc.createAnswer();
+    await pc.setLocalDescription(ans);
+    socket.emit("signal", { to: d.from, data: ans });
+  } else if (d.data.type === "answer") {
+    await pc.setRemoteDescription(d.data);
+  } else {
+    await pc.addIceCandidate(d.data);
   }
-});
-
-socket.on("leave", () => {
-  if (pc) pc.close();
-  pc = null;
-  remote.srcObject = null;
 });
