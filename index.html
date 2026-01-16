@@ -1,30 +1,72 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<title>ZapMeet</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <title>ZapMeet</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Style -->
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div id="overlay">
-  <h1>ZapMeet</h1>
-  <p>Du wirst so schnell wie möglich verbunden</p>
-  <div class="loader"></div>
-</div>
+  <!-- Overlay (Start / Verbinden wie OmeTV) -->
+  <div id="overlay">
+    <h1>ZapMeet</h1>
+    <p>Du wirst so schnell wie möglich verbunden</p>
+    <div class="loader"></div>
+  </div>
 
-<header>ZapMeet</header>
+  <!-- Top Bar -->
+  <header id="topbar">
+    ZapMeet
+  </header>
 
-<main>
-  <video id="remote" autoplay playsinline></video>
-  <video id="local" autoplay muted playsinline></video>
-</main>
+  <!-- Hauptbereich -->
+  <main id="main">
 
-<footer>
-  <button id="start">Start</button>
-</footer>
+    <!-- Video Bereich -->
+    <section id="video-area">
 
-<script src="/socket.io/socket.io.js"></script>
-<script src="app.js"></script>
+      <!-- Partner (links, groß) -->
+      <video
+        id="remote"
+        autoplay
+        playsinline
+      ></video>
+
+      <!-- Eigene Kamera (rechts, kleiner) -->
+      <video
+        id="local"
+        autoplay
+        muted
+        playsinline
+      ></video>
+
+    </section>
+
+    <!-- Chat (Platzhalter – wie OmeTV rechts) -->
+    <aside id="chat">
+      <div id="chat-messages"></div>
+      <input
+        type="text"
+        placeholder="Nachricht schreiben..."
+        disabled
+      >
+    </aside>
+
+  </main>
+
+  <!-- Bottom Bar -->
+  <footer id="controls">
+    <button id="start">Start</button>
+    <button id="next" disabled>Next</button>
+    <button id="stop" disabled>Stop</button>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="app.js"></script>
+
 </body>
 </html>
