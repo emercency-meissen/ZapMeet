@@ -1,46 +1,38 @@
 const socket = io();
 
-let localStream;
 let pc;
-let partnerId = null;
+let partnerId;
+let stream;
 
-const overlay = document.getElementById("overlay");
-const localVideo = document.getElementById("localVideo");
-const remoteVideo = document.getElementById("remoteVideo");
+const local = document.getElementById("local");
+const remote = document.getElementById("remote");
 
-document.getElementById("startBtn").onclick = async () => {
-  overlay.style.display = "flex";
-
-  localStream = await navigator.mediaDevices.getUserMedia({
-    video: true,
-    audio: true
+navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+  .then(s => {
+    stream = s;
+    local.srcObject = stream;
   });
 
-  localVideo.srcObject = localStream;
+document.getElementById("start").onclick = () => {
   socket.emit("start");
-
-  // 🔥 OME-TV-LOGIK: Overlay NUR KURZ
-  setTimeout(() => {
-    overlay.style.display = "none";
-  }, 1500);
 };
 
-document.getElementById("stopBtn").onclick = () => {
-  socket.emit("skip");
-  cleanup();
-};
+socket.on("waiting", () => {
+  console.log("Warten auf Partner");
+});
 
-socket.on("match", id => {
-  partnerId = id;
-  overlay.style.display = "none";
+socket.on("match", async ({ partnerId: pid, initiator }) => {
+  partnerId = pid;
 
   pc = new RTCPeerConnection({
     iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
   });
 
-  localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+  stream.getTracks().forEach(t => pc.addTrack(t, stream));
 
-  pc.ontrack = e => remoteVideo.srcObject = e.streams[0];
+  pc.ontrack = e => {
+    remote.srcObject = e.streams[0];
+  };
 
   pc.onicecandidate = e => {
     if (e.candidate) {
@@ -48,47 +40,32 @@ socket.on("match", id => {
     }
   };
 
-  pc.createOffer().then(offer => {
-    pc.setLocalDescription(offer);
+  if (initiator) {
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
     socket.emit("signal", { to: partnerId, data: offer });
-  });
+  }
 });
 
 socket.on("signal", async ({ from, data }) => {
-  if (!pc) {
-    pc = new RTCPeerConnection({
-      iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
-    });
+  if (!pc) return;
 
-    localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
-
-    pc.ontrack = e => remoteVideo.srcObject = e.streams[0];
-
-    pc.onicecandidate = e => {
-      if (e.candidate) {
-        socket.emit("signal", { to: from, data: e.candidate });
-      }
-    };
-  }
-
-  if (data.type) {
+  if (data.type === "offer") {
     await pc.setRemoteDescription(data);
-    if (data.type === "offer") {
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-      socket.emit("signal", { to: from, data: answer });
-    }
-  } else {
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
+    socket.emit("signal", { to: from, data: answer });
+  } 
+  else if (data.type === "answer") {
+    await pc.setRemoteDescription(data);
+  } 
+  else {
     await pc.addIceCandidate(data);
   }
 });
 
-socket.on("end", () => {
-  cleanup();
-});
-
-function cleanup() {
+socket.on("leave", () => {
   if (pc) pc.close();
   pc = null;
-  remoteVideo.srcObject = null;
-}
+  remote.srcObject = null;
+});
