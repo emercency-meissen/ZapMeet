@@ -8,50 +8,43 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 app.use(express.static(__dirname));
-
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-let waitingUser = null;
+let waiting = null;
 
 io.on("connection", socket => {
+  console.log("CONNECTED", socket.id);
 
   socket.on("start", () => {
-    if (waitingUser && waitingUser.id !== socket.id) {
-      socket.partner = waitingUser.id;
-      waitingUser.partner = socket.id;
+    if (waiting && waiting.id !== socket.id) {
+      const partner = waiting;
+      waiting = null;
 
-      socket.emit("match", waitingUser.id);
-      waitingUser.emit("match", socket.id);
+      socket.partner = partner.id;
+      partner.partner = socket.id;
 
-      waitingUser = null;
+      socket.emit("match", { partnerId: partner.id, initiator: true });
+      partner.emit("match", { partnerId: socket.id, initiator: false });
     } else {
-      waitingUser = socket;
+      waiting = socket;
+      socket.emit("waiting");
     }
   });
 
-  socket.on("signal", data => {
-    io.to(data.to).emit("signal", {
-      from: socket.id,
-      data: data.data
-    });
-  });
-
-  socket.on("skip", () => {
-    if (socket.partner) {
-      io.to(socket.partner).emit("end");
-    }
-    socket.partner = null;
+  socket.on("signal", ({ to, data }) => {
+    io.to(to).emit("signal", { from: socket.id, data });
   });
 
   socket.on("disconnect", () => {
-    if (waitingUser === socket) waitingUser = null;
+    if (waiting?.id === socket.id) waiting = null;
     if (socket.partner) {
-      io.to(socket.partner).emit("end");
+      io.to(socket.partner).emit("leave");
     }
   });
-
 });
 
-server.listen(process.env.PORT || 3000);
+server.listen(process.env.PORT || 3000, () => {
+  console.log("ZapMeet läuft");
+});
