@@ -8,25 +8,24 @@ const startBtn = document.getElementById("start");
 const nextBtn = document.getElementById("next");
 const stopBtn = document.getElementById("stop");
 
-let pc = null;
 let stream = null;
+let pc = null;
 let partnerId = null;
 
-/* ===== MEDIA ===== */
-async function initMedia() {
+/* ===== MEDIA START (NUR NACH KLICK) ===== */
+async function startMedia() {
   stream = await navigator.mediaDevices.getUserMedia({
     video: true,
     audio: true
   });
+
   localVideo.srcObject = stream;
   await localVideo.play();
 }
 
-/* ===== PEER RESET ===== */
-function resetPeer() {
+/* ===== RESET ===== */
+function resetConnection() {
   if (pc) {
-    pc.ontrack = null;
-    pc.onicecandidate = null;
     pc.close();
     pc = null;
   }
@@ -41,20 +40,23 @@ startBtn.onclick = async () => {
   nextBtn.disabled = false;
   stopBtn.disabled = false;
 
-  if (!stream) await initMedia();
+  if (!stream) {
+    await startMedia(); // 🔴 OME-STYLE FIX
+  }
+
   socket.emit("start");
 };
 
 /* ===== NEXT ===== */
 nextBtn.onclick = () => {
-  resetPeer();
+  resetConnection();
   overlay.style.display = "flex";
   socket.emit("start");
 };
 
 /* ===== STOP ===== */
 stopBtn.onclick = () => {
-  resetPeer();
+  resetConnection();
   overlay.style.display = "none";
   startBtn.disabled = false;
   nextBtn.disabled = true;
@@ -62,10 +64,6 @@ stopBtn.onclick = () => {
 };
 
 /* ===== SOCKET ===== */
-socket.on("waiting", () => {
-  // Overlay bleibt sichtbar
-});
-
 socket.on("matched", async ({ id, init }) => {
   overlay.style.display = "none";
   partnerId = id;
@@ -74,7 +72,9 @@ socket.on("matched", async ({ id, init }) => {
     iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
   });
 
-  stream.getTracks().forEach(t => pc.addTrack(t, stream));
+  stream.getTracks().forEach(track =>
+    pc.addTrack(track, stream)
+  );
 
   pc.ontrack = e => {
     remoteVideo.srcObject = e.streams[0];
@@ -94,7 +94,10 @@ socket.on("matched", async ({ id, init }) => {
   if (init) {
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
-    socket.emit("signal", { to: partnerId, data: offer });
+    socket.emit("signal", {
+      to: partnerId,
+      data: offer
+    });
   }
 });
 
@@ -105,12 +108,13 @@ socket.on("signal", async ({ from, data }) => {
     await pc.setRemoteDescription(data);
     const answer = await pc.createAnswer();
     await pc.setLocalDescription(answer);
-    socket.emit("signal", { to: from, data: answer });
-  } 
-  else if (data.type === "answer") {
+    socket.emit("signal", {
+      to: from,
+      data: answer
+    });
+  } else if (data.type === "answer") {
     await pc.setRemoteDescription(data);
-  } 
-  else {
+  } else {
     await pc.addIceCandidate(data);
   }
 });
